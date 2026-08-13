@@ -2,28 +2,39 @@
 <html lang="es-MX">
 <head>
 <!--
-╔══════════════════════════════════════════════════════════════════════════╗
-║ MAYAB AUTOS · MÉRIDA — LANDING + PANEL ADMIN + WHATSAPP + FACEBOOK (v2)   ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║ CORREGIDO EN ESTA VERSIÓN:                                                ║
-║ • Error de sintaxis JS que dejaba la página en blanco (v1).               ║
-║ • Imágenes de ejemplo nuevas + respaldo automático: si alguna foto no     ║
-║   carga, se muestra un placeholder SVG de marca (nunca queda en blanco).  ║
-║ • Inventario DEMO precargado (6 autos) mientras el dueño sube el suyo.    ║
-║ • Botón "♻️ Restaurar inventario de ejemplo" en el panel.                 ║
-║                                                                            ║
-║ MANUAL DEL DUEÑO (resumen; la guía completa vive dentro del panel):       ║
-║ 1) Entra por 🔒 Admin (demo: dueno / mayab2026).                          ║
-║ 2) ➕ Agregar vehículo → sube foto (se comprime sola), marca, modelo,      ║
-║    año, km, descripción. Precio OPCIONAL: vacío = "Precio a consultar".   ║
-║ 3) ✏️ Editar · interruptor verde = Disponible/VENDIDO · 🗑️ Eliminar.      ║
-║ 4) 📘 Conecta Facebook una vez y publica/despublica con el switch azul.   ║
-║ 5) Todo cambio se refleja al instante en la landing y en los enlaces      ║
-║    de WhatsApp (mensaje prellenado con marca, modelo, precio y enlace).   ║
-║                                                                            ║
-║ PRODUCCIÓN: hosting Vercel/Netlify + Supabase (DB y Storage de fotos) +    ║
-║ Meta App OAuth (pages_manage_posts, pages_show_list, business_management).║
-╚══════════════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════╗
+║ MAYAB AUTOS · MÉRIDA — v3 (INTEGRACIÓN FACEBOOK REAL + GUÍA MARKETPLACE)   ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║ ⚠️ RESPUESTA HONESTA A TU PREGUNTA:                                        ║
+║ Meta NO expone una API pública para crear anuncios individuales en          ║
+║ Marketplace (el permiso "publish_marketplace" fue descontinuado). Por eso   ║
+║ el botón de la v2 "no hacía nada": era una simulación.                      ║
+║                                                                             ║
+║ LO QUE SÍ SE PUEDE AUTOMATIZAR (ya implementado REAL en esta versión):      ║
+║ 1) PUBLICAR EN TU PÁGINA DE FACEBOOK con foto + precio + enlace usando la   ║
+║    Graph API (POST /{page-id}/photos) con un Page Access Token.             ║
+║ 2) ELIMINAR la publicación al vender/borrar el auto (DELETE /{post-id}).    ║
+║ 3) BOTÓN 🛒 MARKETPLACE: copia todos los datos del auto al portapapeles y   ║
+║    abre facebook.com/marketplace/create/vehicle — solo pegas y publicas     ║
+║    (funciona sin token, en 30 segundos).                                    ║
+║                                                                             ║
+║ RUTAS OFICIALES HACIA MARKETPLACE:                                          ║
+║ A) Post de Página → Compartir → "Compartir en Marketplace" (desde el móvil).║
+║ B) Si eres agencia registrada: CATÁLOGO DE VEHÍCULOS en Commerce Manager    ║
+║    (catalog_type=vehicles, vía Commerce API + feeds). Requiere verificación ║
+║    del negocio y revisión de app con el permiso commerce_management.        ║
+║                                                                             ║
+║ CÓMO CONECTAR (pasos también dentro del panel, botón ❓):                   ║
+║ 1. developers.facebook.com/tools/explorer → inicia sesión con la cuenta     ║
+║    que administra tu página.                                                ║
+║ 2. "Get token" → "Get user access token" → marca permisos:                  ║
+║    pages_show_list, pages_manage_posts, pages_read_engagement.              ║
+║ 3. Genera el token y aprueba.                                               ║
+║ 4. Pégalo en el panel → 🔗 Conectar → elige tu página. Listo.               ║
+║                                                                             ║
+║ ACCESO PANEL: dueno / mayab2026 · Producción: backend + Supabase + token    ║
+║ de larga duración (fb_exchange_token) guardado en servidor, nunca aquí.     ║
+╚═══════════════════════════════════════════════════════════════════════════╝
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -77,7 +88,6 @@ h1,h2,h3,h4{font-family:var(--font-d);line-height:1.15;letter-spacing:-.01em}
 .rv.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-/* header */
 #hdr{position:fixed;inset:0 0 auto 0;z-index:60;transition:background .35s,box-shadow .35s;padding:14px 0}
 #hdr.solid{background:rgba(6,13,24,.92);backdrop-filter:blur(12px);box-shadow:var(--sh-md);padding:10px 0}
 .hdr-in{display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -98,7 +108,6 @@ h1,h2,h3,h4{font-family:var(--font-d);line-height:1.15;letter-spacing:-.01em}
   .nav a{font-size:1.1rem}
 }
 
-/* hero */
 .hero{position:relative;min-height:100svh;display:flex;align-items:center;color:#fff;overflow:hidden;background:var(--navy-950)}
 .hero-bg{position:absolute;inset:0;background-image:url('https://image.qwenlm.ai/public_source/60f5d09c-aa4a-4f9c-b83b-0997d3675c51/1c9b45ab9-a513-4b0f-9960-f0b7d1fde66b.png'),linear-gradient(135deg,#0E1F38,#1F4066);background-position:center,center;background-size:cover,cover;animation:fadeUp 1.2s ease both}
 .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(6,13,24,.94) 20%,rgba(6,13,24,.62) 55%,rgba(6,13,24,.25) 100%),linear-gradient(to top,rgba(6,13,24,.9),transparent 40%)}
@@ -121,7 +130,6 @@ h1,h2,h3,h4{font-family:var(--font-d);line-height:1.15;letter-spacing:-.01em}
 .chip b{color:var(--gold)}
 .hero-scroll{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;z-index:2;animation:floatY 3s ease-in-out infinite}
 
-/* secciones */
 section{padding:88px 0}
 .sec-head{max-width:640px;margin-bottom:46px}
 .kicker{color:var(--gold-600);font-weight:800;letter-spacing:.22em;text-transform:uppercase;font-size:.74rem;display:flex;align-items:center;gap:10px}
@@ -131,7 +139,6 @@ section{padding:88px 0}
 .dark .sec-head h2{color:#fff}
 .dark .sec-head p{color:rgba(255,255,255,.65)}
 
-/* catálogo */
 #catalogo{background:var(--paper)}
 .filters{display:flex;flex-wrap:wrap;gap:12px;align-items:end;background:var(--white);padding:18px;border-radius:var(--r-md);box-shadow:var(--sh-sm);margin-bottom:34px;border:1px solid var(--line)}
 .f-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px}
@@ -173,7 +180,6 @@ section{padding:88px 0}
 .ca-more:hover{background:var(--navy-700)}
 .empty-inv{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);background:#fff;border-radius:var(--r-md);border:1.5px dashed var(--line)}
 
-/* garantías */
 #garantias{background:var(--navy-900);position:relative;overflow:hidden}
 #garantias::before{content:"";position:absolute;bottom:-40%;right:-10%;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(240,163,42,.16),transparent 70%)}
 .g-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
@@ -189,7 +195,6 @@ section{padding:88px 0}
 .trust-copy .firma{color:var(--gold);font-weight:800;font-family:var(--font-d)}
 @media(max-width:860px){.trust-split{grid-template-columns:1fr}}
 
-/* testimonios */
 #testimonios{background:var(--paper)}
 .t-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px}
 .t-card{background:#fff;border-radius:var(--r-md);padding:28px;box-shadow:var(--sh-sm);border:1px solid var(--line);position:relative;transition:.3s}
@@ -202,7 +207,6 @@ section{padding:88px 0}
 .t-who b{display:block;font-size:.9rem;color:var(--navy-900)}
 .t-who small{color:var(--muted);font-size:.76rem}
 
-/* ubicación / contacto */
 #ubicacion{background:#fff}
 .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:stretch}
 @media(max-width:900px){.loc-grid{grid-template-columns:1fr}}
@@ -223,7 +227,6 @@ section{padding:88px 0}
 .c-form input:focus,.c-form textarea:focus{border-color:var(--gold)}
 .c-form ::placeholder{color:rgba(255,255,255,.4)}
 
-/* footer */
 footer{background:var(--navy-950);color:rgba(255,255,255,.6);padding:56px 0 30px;font-size:.86rem}
 .ft-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:34px;margin-bottom:36px}
 @media(max-width:800px){.ft-grid{grid-template-columns:1fr}}
@@ -231,16 +234,14 @@ footer h4{color:#fff;margin-bottom:14px;font-size:.95rem}
 footer a:hover{color:var(--gold)}
 .ft-seo{border-top:1px solid rgba(255,255,255,.08);padding-top:20px;font-size:.76rem;color:rgba(255,255,255,.38);display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:space-between}
 
-/* flotante WA */
 #waFloat{position:fixed;right:22px;bottom:22px;z-index:70;width:62px;height:62px;border-radius:50%;background:var(--wa);display:grid;place-items:center;box-shadow:0 12px 30px rgba(23,138,70,.45);animation:pulseWA 2.2s infinite;transition:transform .25s}
 #waFloat:hover{transform:scale(1.1)}
 #waFloat svg{width:32px;height:32px;fill:#fff}
 
-/* modales */
 .modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,13,24,.72);backdrop-filter:blur(6px)}
 .modal.open{display:flex}
 .modal-box{background:#fff;border-radius:var(--r-lg);width:min(680px,100%);max-height:92vh;overflow:auto;box-shadow:var(--sh-lg);animation:fadeUp .35s ease}
-.modal-box.narrow{width:min(460px,100%)}
+.modal-box.narrow{width:min(500px,100%)}
 .m-head{display:flex;align-items:center;justify-content:space-between;padding:22px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
 .m-head h3{color:var(--navy-900);font-size:1.15rem}
 .m-close{width:38px;height:38px;border-radius:10px;background:var(--paper);font-size:1.1rem;color:var(--muted);transition:.2s}
@@ -255,7 +256,6 @@ footer a:hover{color:var(--gold)}
 .d-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:560px){.d-actions{grid-template-columns:1fr}}
 
-/* forms */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:560px){.form-grid{grid-template-columns:1fr}}
 .fld{display:flex;flex-direction:column;gap:6px}
@@ -276,7 +276,6 @@ footer a:hover{color:var(--gold)}
 .btn-red:hover{background:#B91C1C}
 .btn-block{width:100%}
 
-/* admin */
 #viewAdmin{display:none;min-height:100vh;background:#EEF1F5}
 body.admin #viewAdmin{display:block}
 body.admin #viewLanding,body.admin #waFloat{display:none}
@@ -302,13 +301,14 @@ body.admin #viewLanding,body.admin #waFloat{display:none}
 .stat b{font-family:var(--font-d);font-size:1.8rem;color:var(--navy-900);display:block}
 .stat span{font-size:.76rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .stat.gold b{color:var(--gold-600)}.stat.green b{color:var(--green)}.stat.red b{color:var(--red)}.stat.fb b{color:var(--fb)}
-.adm-duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:26px}
+.adm-duo{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:26px}
 @media(max-width:860px){.adm-duo{grid-template-columns:1fr}}
 .adm-card{background:#fff;border-radius:var(--r-md);border:1px solid var(--line);padding:24px;box-shadow:var(--sh-sm)}
 .adm-card h3{font-size:1rem;color:var(--navy-900);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .adm-card p{font-size:.86rem;color:var(--muted);margin-bottom:14px}
 .fb-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 .fb-dot.on{background:var(--green)}.fb-dot.off{background:var(--red)}
+.linky{color:var(--fb);font-weight:800;font-size:.82rem;text-decoration:underline}
 .adm-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
 .adm-toolbar h2{font-size:1.3rem;color:var(--navy-900)}
 .inv-row{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:14px;display:flex;align-items:center;gap:16px;margin-bottom:12px;box-shadow:var(--sh-sm);flex-wrap:wrap;transition:.25s}
@@ -329,6 +329,7 @@ body.admin #viewLanding,body.admin #waFloat{display:none}
 .ic-btn{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:1rem;border:1.5px solid var(--line);transition:.2s;background:#fff}
 .ic-btn.edit:hover{border-color:var(--navy-800);background:var(--navy-900)}
 .ic-btn.del:hover{border-color:var(--red);background:var(--red)}
+.ic-btn.mp:hover{border-color:var(--fb);background:var(--fb)}
 details.manual{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);margin-top:22px;box-shadow:var(--sh-sm)}
 details.manual summary{padding:20px 24px;font-weight:800;color:var(--navy-900);cursor:pointer;font-size:1rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
 details.manual summary::after{content:"＋";color:var(--gold-600);font-size:1.2rem}
@@ -338,7 +339,6 @@ details.manual[open] summary::after{content:"－"}
 .manual-in ol{padding-left:20px;display:flex;flex-direction:column;gap:5px}
 .manual-in code{background:var(--paper);border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-size:.8rem;color:var(--navy-800)}
 
-/* login */
 .login-box{min-height:100vh;display:grid;place-items:center;background:var(--navy-950);background-image:url('https://image.qwenlm.ai/public_source/60f5d09c-aa4a-4f9c-b83b-0997d3675c51/1c9b45ab9-a513-4b0f-9960-f0b7d1fde66b.png'),linear-gradient(135deg,#060D18,#16304F);background-size:cover,cover;background-position:center,center;padding:20px}
 .login-card{width:min(420px,100%);background:rgba(6,13,24,.88);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-lg);padding:38px;color:#fff;box-shadow:var(--sh-lg)}
 .login-card h2{font-size:1.4rem;margin:14px 0 6px}
@@ -349,7 +349,16 @@ details.manual[open] summary::after{content:"－"}
 .login-err{color:#FCA5A5;font-size:.82rem;font-weight:700;min-height:20px;margin-top:8px}
 .login-hint{margin-top:16px;font-size:.76rem;color:rgba(255,255,255,.45);text-align:center}
 
-/* toasts */
+.fb-help-step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
+.fb-help-step .n{width:32px;height:32px;flex:none;border-radius:10px;background:var(--fb);color:#fff;display:grid;place-items:center;font-weight:800;font-family:var(--font-d)}
+.fb-help-step p{font-size:.88rem;color:var(--muted)}
+.fb-help-step b{color:var(--navy-900)}
+.fb-help-step code{background:var(--paper);border:1px solid var(--line);padding:2px 6px;border-radius:6px;font-size:.8rem;color:var(--navy-800)}
+.callout{border-radius:12px;padding:14px 16px;font-size:.85rem;margin:14px 0}
+.callout.warn{background:#FEF3C7;border:1px solid #FDE68A;color:#92400E}
+.callout.info{background:#DBEAFE;border:1px solid #BFDBFE;color:#1E40AF}
+.callout.ok{background:#DCFCE7;border:1px solid #BBF7D0;color:#166534}
+
 #toasts{position:fixed;top:20px;right:20px;z-index:120;display:flex;flex-direction:column;gap:10px}
 .toast{background:var(--navy-900);color:#fff;padding:14px 20px;border-radius:12px;box-shadow:var(--sh-lg);font-weight:700;font-size:.88rem;display:flex;gap:10px;align-items:center;animation:fadeUp .35s ease;border-left:4px solid var(--gold);max-width:340px}
 .toast.ok{border-left-color:var(--green)}
@@ -360,9 +369,7 @@ details.manual[open] summary::after{content:"－"}
 </head>
 <body>
 
-<!-- ══════════ VISTA PÚBLICA ══════════ -->
 <div id="viewLanding">
-
 <header id="hdr">
   <div class="wrap hdr-in">
     <a class="logo" href="#/" aria-label="Mayab Autos inicio">
@@ -559,23 +566,40 @@ details.manual[open] summary::after{content:"－"}
         <ol class="guide-steps">
           <li><b>1 ·</b> Pulsa <b>➕ Agregar mi primer auto</b> aquí abajo.</li>
           <li><b>2 ·</b> Toca la zona punteada 📷 y elige la <b>foto</b> desde tu celular o computadora (se optimiza sola).</li>
-          <li><b>3 ·</b> Escribe <b>marca, modelo, año, kilometraje</b> y una <b>descripción</b> corta. Ejemplo: “Único dueño, factura original, aire helado, llantas nuevas”.</li>
+          <li><b>3 ·</b> Escribe <b>marca, modelo, año, kilometraje</b> y una <b>descripción</b> corta. Ej.: “Único dueño, factura original, aire helado, llantas nuevas”.</li>
           <li><b>4 ·</b> <b>Precio opcional:</b> si lo dejas vacío o marcas “Precio a consultar”, el sitio mostrará esa leyenda automáticamente.</li>
-          <li><b>5 ·</b> Pulsa <b>💾 Guardar</b> y listo: aparece al instante en la landing con botones de WhatsApp y Facebook.</li>
-          <li><b>6 ·</b> Los autos con etiqueta <span class="tag demo">DEMO</span> son de ejemplo mientras arrancas: edítalos con ✏️ o elimínalos con 🗑️.</li>
+          <li><b>5 ·</b> Pulsa <b>💾 Guardar</b>: aparece al instante en la landing con sus botones de WhatsApp.</li>
+          <li><b>6 ·</b> Los autos con etiqueta <span class="tag demo">DEMO</span> son de ejemplo: edítalos con ✏️ o elimínalos con 🗑️.</li>
+          <li><b>7 ·</b> 📘 <b>Facebook:</b> conecta tu página en la tarjeta azul de abajo (botón ❓ te guía paso a paso). El switch azul publica REAL en tu página; el botón 🛒 de cada auto te prepara el anuncio para Marketplace.</li>
         </ol>
         <div class="guide-btns">
           <button class="btn btn-gold" data-act="open-add">➕ Agregar mi primer auto</button>
           <button class="btn btn-navy" data-act="restore-demo">♻️ Restaurar inventario de ejemplo</button>
+          <button class="btn btn-ghost" style="color:var(--navy-800);border-color:var(--line)" data-act="fb-help">📘 ¿Cómo publico en Facebook / Marketplace?</button>
         </div>
       </div>
 
       <div class="adm-stats" id="admStats"></div>
       <div class="adm-duo">
         <div class="adm-card">
-          <h3>📘 Facebook Marketplace <span class="fb-dot" id="fbDot"></span></h3>
+          <h3>📘 Facebook — Página + Marketplace <span class="fb-dot" id="fbDot"></span></h3>
           <p id="fbStatusTxt"></p>
-          <button class="btn btn-navy" id="fbConnectBtn" data-act="fb-connect">Conectar cuenta de Facebook</button>
+          <div id="fbConnectZone">
+            <div class="fld" style="margin-bottom:12px">
+              <label>Token de Meta (se genera en Graph API Explorer)</label>
+              <input type="password" id="fbTokenInput" placeholder="Pega aquí tu token EAAG…">
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-navy" data-act="fb-connect">🔗 Conectar mi página</button>
+              <button class="linky" data-act="fb-help">❓ Cómo obtener mi token (3 min)</button>
+            </div>
+          </div>
+          <div id="fbConnectedZone" style="display:none">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red)" data-act="fb-disconnect">Desconectar</button>
+              <button class="linky" data-act="fb-help" style="align-self:center">❓ Ayuda / Marketplace</button>
+            </div>
+          </div>
         </div>
         <div class="adm-card">
           <h3>⚙️ Ajustes del negocio</h3>
@@ -590,23 +614,19 @@ details.manual[open] summary::after{content:"－"}
       </div>
       <div id="invList"></div>
 
-      <details class="manual">
-        <summary>📖 Manual completo del dueño y SEO</summary>
+      <details class="manual" open>
+        <summary>📖 Manual completo: inventario, Facebook y Marketplace</summary>
         <div class="manual-in">
-          <h4>Subir un vehículo nuevo</h4>
-          <ol><li>Pulsa <code>➕ Agregar vehículo</code>, sube la foto y llena los datos.</li><li>Precio opcional: activa “Precio a consultar” si aún no defines precio.</li><li>Activa “📘 Publicar en Facebook Marketplace” si ya conectaste tu cuenta.</li></ol>
-          <h4>Editar fotos, precio o descripción</h4>
-          <ol><li>Pulsa ✏️ en el inventario, cambia lo que necesites y guarda. El sitio se actualiza al instante.</li></ol>
-          <h4>Marcar como VENDIDO (1 clic)</h4>
-          <ol><li>Apaga el interruptor verde. El auto sigue visible con etiqueta 🔴 VENDIDO hasta que lo elimines.</li><li>Si estaba en Facebook, te preguntamos si también lo marcas vendido allá.</li></ol>
-          <h4>Eliminar definitivamente</h4>
-          <ol><li>Pulsa 🗑️ y confirma. Desaparece del sitio y de Marketplace.</li></ol>
-          <h4>Facebook Marketplace</h4>
-          <ol><li>Una sola vez: pulsa <code>Conectar cuenta de Facebook</code> e inicia sesión seguro con Meta.</li><li>El switch 📘 de cada auto publica / despublica con la misma foto, descripción y precio.</li></ol>
-          <h4>WhatsApp (no requiere configuración)</h4>
-          <ol><li>Cada tarjeta genera sola el mensaje con marca, modelo, año, precio, foto y enlace directo a la ficha.</li></ol>
+          <h4>Subir / editar / vender / eliminar autos</h4>
+          <ol><li><code>➕ Agregar vehículo</code>: sube foto, marca, modelo, año, km, descripción. Precio opcional (vacío = “Precio a consultar”).</li><li>✏️ Edita cualquier dato, incluida la foto. Se refleja al instante en la página.</li><li>Interruptor verde: Disponible ↔ VENDIDO. El vendido sigue visible con etiqueta 🔴 hasta que lo elimines con 🗑️.</li></ol>
+          <h4>📘 Facebook (publicación REAL en tu Página)</h4>
+          <ol><li>Genera tu token en <code>developers.facebook.com/tools/explorer</code> con permisos <code>pages_show_list</code>, <code>pages_manage_posts</code>, <code>pages_read_engagement</code> (guía completa en el botón ❓).</li><li>Pégalo y pulsa <code>🔗 Conectar mi página</code>. Elige tu página.</li><li>El <b>switch azul</b> de cada auto publica/quita la publicación REAL en tu Página con foto + precio + enlace (Graph API <code>POST /{page-id}/photos</code>).</li><li>Al vender o eliminar, la publicación se elimina también de Facebook.</li></ol>
+          <h4>🛒 ¿Y Marketplace?</h4>
+          <ol><li><b>Importante:</b> Meta NO permite crear anuncios de Marketplace por API a apps de terceros (el permiso antiguo fue retirado). Ningún sistema externo puede hacerlo directamente.</li><li>Por eso el botón <b>🛒</b> de cada auto hace lo mejor posible: <b>copia toda la ficha</b> (título, precio, km, descripción, teléfono, enlace) a tu portapapeles y <b>abre el creador de Marketplace</b> (facebook.com/marketplace/create/vehicle). Solo pegas el texto y publicas: 30 segundos.</li><li>Truco extra: abre tu publicación de la Página desde el celular → Compartir → <b>“Compartir en Marketplace”</b> (disponible para vehículos en páginas elegibles).</li><li><b>Ruta oficial para agencias</b> (si creces): catálogo de vehículos en Commerce Manager (<code>catalog_type=vehicles</code>, API de Commerce + feeds). Requiere verificación del negocio y revisión de la app con <code>commerce_management</code>. Con gusto te ayudamos a configurarlo cuando lo necesites.</li></ol>
+          <h4>WhatsApp (sin configuración)</h4>
+          <ol><li>Cada tarjeta genera sola el mensaje con marca, modelo, año, precio, foto y enlace directo a la ficha. El botón flotante lleva a tu número.</li></ol>
           <h4>SEO para “autos usados en Mérida”</h4>
-          <ol><li>Menciona “Mérida” y “Yucatán” en las descripciones de cada auto.</li><li>Publica al menos 1 vehículo por semana (contenido fresco = mejor posición).</li><li>Pide a cada cliente una reseña en Google mencionando “autos usados en Mérida”.</li><li>Registra tu ficha en Google Business Profile con fotos y horario.</li><li>Comparte fichas por WhatsApp y Facebook: los clics suben tu posición.</li></ol>
+          <ol><li>Menciona “Mérida” y “Yucatán” en las descripciones.</li><li>Publica al menos 1 vehículo por semana.</li><li>Pide reseñas en Google mencionando “autos usados en Mérida”.</li><li>Regístrate en Google Business Profile.</li><li>Comparte fichas por WhatsApp/Facebook: los clics suben posiciones.</li></ol>
         </div>
       </details>
     </div>
@@ -638,7 +658,7 @@ details.manual[open] summary::after{content:"－"}
         <div class="fld full" style="flex-direction:row;gap:22px;flex-wrap:wrap">
           <label class="chk"><input type="checkbox" id="vSinPrecio"> Precio a consultar</label>
           <label class="chk"><input type="checkbox" id="vVendido"> Marcar como VENDIDO</label>
-          <label class="chk"><input type="checkbox" id="vFb"> 📘 Publicar en Facebook Marketplace</label>
+          <label class="chk"><input type="checkbox" id="vFb"> 📘 Publicar también en mi Página de Facebook</label>
         </div>
       </div>
       <input type="hidden" id="vId">
@@ -654,7 +674,7 @@ details.manual[open] summary::after{content:"－"}
   <div class="modal-box narrow">
     <div class="m-head"><h3>Eliminar vehículo</h3><button class="m-close" data-act="close" data-target="modalDelete">✕</button></div>
     <div class="m-body">
-      <p style="color:var(--muted);font-size:.92rem">¿Eliminar definitivamente <b id="delName" style="color:var(--navy-900)"></b> del catálogo<span id="delFbNote" style="display:none"> y de Facebook Marketplace</span>? Esta acción no se puede deshacer.</p>
+      <p style="color:var(--muted);font-size:.92rem">¿Eliminar definitivamente <b id="delName" style="color:var(--navy-900)"></b> del catálogo<span id="delFbNote" style="display:none"> y también su publicación de Facebook</span>? Esta acción no se puede deshacer.</p>
       <div style="display:flex;gap:10px;margin-top:20px">
         <button class="btn btn-ghost" style="color:var(--muted);border-color:var(--line);flex:1" data-act="close" data-target="modalDelete">Cancelar</button>
         <button class="btn btn-red" style="flex:1" data-act="confirm-del">🗑️ Sí, eliminar</button>
@@ -668,7 +688,7 @@ details.manual[open] summary::after{content:"－"}
     <div class="m-head"><h3>Marcar como VENDIDO</h3><button class="m-close" data-act="close" data-target="modalSold">✕</button></div>
     <div class="m-body">
       <p style="color:var(--muted);font-size:.92rem"><b id="soldName" style="color:var(--navy-900)"></b> seguirá visible en el sitio con la etiqueta 🔴 VENDIDO hasta que lo elimines.</p>
-      <label class="chk" id="soldFbWrap" style="margin-top:14px"><input type="checkbox" id="soldFbChk" checked> 📘 Marcar como vendido también en Facebook Marketplace</label>
+      <label class="chk" id="soldFbWrap" style="margin-top:14px"><input type="checkbox" id="soldFbChk" checked> 📘 Bajar también la publicación de Facebook</label>
       <div style="display:flex;gap:10px;margin-top:20px">
         <button class="btn btn-ghost" style="color:var(--muted);border-color:var(--line);flex:1" data-act="close" data-target="modalSold">Cancelar</button>
         <button class="btn btn-red" style="flex:1" data-act="confirm-sold">🔴 Marcar vendido</button>
@@ -677,18 +697,39 @@ details.manual[open] summary::after{content:"－"}
   </div>
 </div>
 
-<div class="modal" id="modalFb">
+<div class="modal" id="modalPages">
   <div class="modal-box narrow">
-    <div class="m-head"><h3>📘 Conectar Facebook del negocio</h3><button class="m-close" data-act="close" data-target="modalFb">✕</button></div>
+    <div class="m-head"><h3>Elige tu página de Facebook</h3><button class="m-close" data-act="close" data-target="modalPages">✕</button></div>
+    <div class="m-body" id="pagesList"></div>
+  </div>
+</div>
+
+<div class="modal" id="modalFbHelp">
+  <div class="modal-box">
+    <div class="m-head"><h3>📘 Facebook: qué se puede automatizar y cómo</h3><button class="m-close" data-act="close" data-target="modalFbHelp">✕</button></div>
     <div class="m-body">
-      <ol style="display:flex;flex-direction:column;gap:12px;color:var(--muted);font-size:.9rem;padding-left:20px">
-        <li>Iniciarás sesión seguro con <b>Meta OAuth</b> (nunca vemos tu contraseña).</li>
-        <li>Permisos: <code style="background:var(--paper);padding:2px 6px;border-radius:6px">pages_show_list</code>, <code style="background:var(--paper);padding:2px 6px;border-radius:6px">pages_manage_posts</code>, <code style="background:var(--paper);padding:2px 6px;border-radius:6px">business_management</code>.</li>
-        <li>Eliges la página del negocio (o tu perfil) una sola vez.</li>
-        <li>Desde entonces publicar, vender y eliminar se sincroniza con Marketplace.</li>
-      </ol>
-      <button class="btn btn-block" id="fbAuthBtn" data-act="fb-auth" style="background:var(--fb);color:#fff;margin-top:20px">🔐 Iniciar sesión con Facebook</button>
-      <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:12px">Flujo simulado en esta demo. En producción usa tu App ID de Meta.</p>
+      <div class="callout warn"><b>Lo que debes saber primero:</b> Meta <b>no permite crear anuncios de Marketplace por API</b> (el permiso <code>publish_marketplace</code> fue retirado hace años). Ningún sistema externo puede publicar directo en Marketplace: es una restricción oficial de Meta, no de esta página.</div>
+
+      <div class="callout ok"><b>✅ Lo que este panel SÍ automatiza (real, con Graph API):</b><br>
+      • Publicar en tu <b>Página de Facebook</b> con foto, precio y enlace (switch azul 📘).<br>
+      • Eliminar la publicación al vender o borrar el auto.<br>
+      • El botón <b>🛒</b> de cada auto copia toda la ficha y abre el creador de Marketplace: pegas y publicas en 30 segundos.</div>
+
+      <h3 style="margin:22px 0 14px;font-size:1.05rem;color:var(--navy-900)">🔑 Conecta tu página en 5 pasos (una sola vez, ~3 min)</h3>
+      <div class="fb-help-step"><span class="n">1</span><p>Entra a <b><a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener" style="color:var(--fb);text-decoration:underline">developers.facebook.com/tools/explorer</a></b> e inicia sesión con tu cuenta de Facebook (la que administra la página del negocio).</p></div>
+      <div class="fb-help-step"><span class="n">2</span><p>Pulsa <b>“Get token” → “Get user access token”</b> y marca estos permisos:<br><code>pages_show_list</code> · <code>pages_manage_posts</code> · <code>pages_read_engagement</code></p></div>
+      <div class="fb-help-step"><span class="n">3</span><p>Haz clic en <b>“Generate access token”</b> y aprueba. Se copiará un texto largo que empieza con <code>EAAG…</code></p></div>
+      <div class="fb-help-step"><span class="n">4</span><p>Pega ese token en el campo de la tarjeta azul y pulsa <b>🔗 Conectar mi página</b>. Elige la página del negocio.</p></div>
+      <div class="fb-help-step"><span class="n">5</span><p>Listo: el <b>switch azul</b> de cada auto publicará de verdad en tu página con la foto, el precio y el enlace a la ficha. 🎉</p></div>
+
+      <h3 style="margin:22px 0 14px;font-size:1.05rem;color:var(--navy-900)">🛒 Entonces, ¿cómo llego a Marketplace?</h3>
+      <div class="callout info"><b>Ruta rápida (recomendada):</b> pulsa <b>🛒</b> en el auto → se copia toda la información y se abre <code>facebook.com/marketplace/create/vehicle</code> → pegas el texto, confirmas la foto y publicas. 30 segundos.</div>
+      <div class="callout info"><b>Ruta desde tu publicación:</b> abre en tu celular el post que el panel publicó en tu Página → <b>Compartir → “Compartir en Marketplace”</b> (disponible para vehículos en páginas elegibles).</div>
+      <div class="callout info"><b>Ruta oficial para agencias (si creces):</b> dar de alta un <b>catálogo de vehículos</b> en Commerce Manager (<code>catalog_type=vehicles</code>) y sincronizar el inventario por API o feed. Requiere verificación del negocio ante Meta y revisión de la app (<code>commerce_management</code>). Es como trabajan las plataformas grandes de seminuevos.</div>
+
+      <div class="callout warn"><b>🔒 Sobre el token:</b> se guarda solo en este navegador (modo demo) y caduca en ~1 hora. Si un día deja de funcionar, genera otro y vuelve a conectar. En producción el token de larga duración (60 días, <code>fb_exchange_token</code>) se guarda en un servidor seguro, nunca en el navegador.</div>
+
+      <button class="btn btn-gold btn-block" data-act="close" data-target="modalFbHelp" style="margin-top:10px">Entendido, vamos a conectarlo</button>
     </div>
   </div>
 </div>
@@ -704,36 +745,133 @@ function mxn(n){return new Intl.NumberFormat('es-MX',{style:'currency',currency:
 function kmFmt(n){return new Intl.NumberFormat('es-MX').format(n)+' km';}
 function base(){return location.href.split('#')[0];}
 function autoLink(id){return base()+'#/auto/'+id;}
+var GRAPH='https://graph.facebook.com/v19.0';
 
-/* Respaldo SVG: si una foto no carga, nunca queda en blanco */
 var FALLBACK_SVG="<svg xmlns='http://www.w3.org/2000/svg' width='800' height='500' viewBox='0 0 800 500'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#0E1F38'/><stop offset='1' stop-color='#1F4066'/></linearGradient></defs><rect width='800' height='500' fill='url(#g)'/><g stroke='#F0A32A' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M200 320 L240 250 Q252 230 276 230 L524 230 Q548 230 560 250 L600 320'/><path d='M160 320 L640 320 Q660 320 660 340 L660 350 Q660 370 640 370 L160 370 Q140 370 140 350 L140 340 Q140 320 160 320 Z'/></g><circle cx='260' cy='370' r='34' fill='#060D18' stroke='#F0A32A' stroke-width='10'/><circle cx='540' cy='370' r='34' fill='#060D18' stroke='#F0A32A' stroke-width='10'/><text x='400' y='452' text-anchor='middle' font-family='Arial,sans-serif' font-size='30' font-weight='bold' fill='#FFD98A'>MAYAB AUTOS · MÉRIDA</text></svg>";
 var FALLBACK_IMG='data:image/svg+xml,'+encodeURIComponent(FALLBACK_SVG);
 function imgFix(el){el.onerror=null;el.src=FALLBACK_IMG;}
 window.imgFix=imgFix;
 
+function copyText(txt){
+  if(navigator.clipboard&&navigator.clipboard.writeText){return navigator.clipboard.writeText(txt);}
+  return new Promise(function(res,rej){
+    var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');res();}catch(e){rej(e);}
+    document.body.removeChild(ta);
+  });
+}
+
 /* ═══════ ESTADO ═══════ */
 var ADMIN_USER='dueno', ADMIN_PASS='mayab2026';
-var LS_INV='mayab_autos_inv_v2', LS_SET='mayab_autos_set_v2';
+var LS_INV='mayab_autos_inv_v3', LS_SET='mayab_autos_set_v3';
 var IMG_BASE='https://image.qwenlm.ai/public_source/60f5d09c-aa4a-4f9c-b83b-0997d3675c51/';
 function seed(){return [
- {id:'v1',marca:'Toyota',modelo:'Corolla',anio:2021,tipo:'auto',km:42500,precio:289900,estado:'disponible',fbPublished:true,fbPostId:'mkt-88412',fecha:20260801,demo:true,foto:IMG_BASE+'1f3b35012-972a-415f-9679-fb00de59514e.png',desc:'Único dueño y factura original de agencia. Mantenimientos al día, llantas nuevas y aire helado. El sedán más confiable de México, listo para estrenar dueño en Mérida.'},
- {id:'v2',marca:'Nissan',modelo:'NP300',anio:2020,tipo:'camioneta',km:68000,precio:329900,estado:'disponible',fbPublished:true,fbPostId:'mkt-88377',fecha:20260728,demo:true,foto:IMG_BASE+'1df824a37-a064-444c-86d1-8f5ba69199a0.png',desc:'Doble cabina 2.5 ideal para trabajo y familia. Cristales eléctricos, caja forrada y llantas al 80%. ¡Lista para el trabajo rudo y el viaje del finde a Progreso!'},
+ {id:'v1',marca:'Toyota',modelo:'Corolla',anio:2021,tipo:'auto',km:42500,precio:289900,estado:'disponible',fbPublished:false,fbPostId:'',fecha:20260801,demo:true,foto:IMG_BASE+'1f3b35012-972a-415f-9679-fb00de59514e.png',desc:'Único dueño y factura original de agencia. Mantenimientos al día, llantas nuevas y aire helado. El sedán más confiable de México, listo para estrenar dueño en Mérida.'},
+ {id:'v2',marca:'Nissan',modelo:'NP300',anio:2020,tipo:'camioneta',km:68000,precio:329900,estado:'disponible',fbPublished:false,fbPostId:'',fecha:20260728,demo:true,foto:IMG_BASE+'1df824a37-a064-444c-86d1-8f5ba69199a0.png',desc:'Doble cabina 2.5 ideal para trabajo y familia. Cristales eléctricos, caja forrada y llantas al 80%. ¡Lista para el trabajo rudo y el viaje del finde a Progreso!'},
  {id:'v3',marca:'Honda',modelo:'CR-V',anio:2022,tipo:'camioneta',km:31200,precio:459900,estado:'disponible',fbPublished:false,fbPostId:'',fecha:20260806,demo:true,foto:IMG_BASE+'19488a445-24d3-46b3-8793-fde8abcfd8c2.png',desc:'SUV familiar con cámara de reversa, Apple CarPlay y sensores de estacionamiento. Un dueño, cero detalles y papeles en regla. Espacio de sobra para las vacaciones.'},
- {id:'v4',marca:'Volkswagen',modelo:'Golf',anio:2019,tipo:'auto',km:74800,precio:239900,estado:'vendido',fbPublished:true,fbPostId:'mkt-87990',fecha:20260715,demo:true,foto:IMG_BASE+'188138f19-0d51-43b7-9401-aea8c3b1f8bf.png',desc:'Hatchback alemán con carácter: motor turbo, pantalla táctil y rines deportivos. Impecable por dentro y por fuera. ¡Ya encontró familia!'},
+ {id:'v4',marca:'Volkswagen',modelo:'Golf',anio:2019,tipo:'auto',km:74800,precio:239900,estado:'vendido',fbPublished:false,fbPostId:'',fecha:20260715,demo:true,foto:IMG_BASE+'188138f19-0d51-43b7-9401-aea8c3b1f8bf.png',desc:'Hatchback alemán con carácter: motor turbo, pantalla táctil y rines deportivos. Impecable por dentro y por fuera. ¡Ya encontró familia!'},
  {id:'v5',marca:'Mazda',modelo:'3',anio:2023,tipo:'auto',km:18900,precio:359900,estado:'disponible',fbPublished:false,fbPostId:'',fecha:20260810,demo:true,foto:IMG_BASE+'1a09c0b53-dd15-48f2-b6ab-3ff020310f71.png',desc:'Seminuevo con garantía de agencia vigente. Diseño Kodo, consumo eficiente y manejo premium. Como nuevo, a precio de oportunidad.'},
  {id:'v6',marca:'Toyota',modelo:'Sienna',anio:2018,tipo:'camioneta',km:92000,precio:null,estado:'disponible',fbPublished:false,fbPostId:'',fecha:20260720,demo:true,foto:IMG_BASE+'1f71ccaed-9e04-4718-aacb-6fbbeea18d3c.png',desc:'La favorita de las familias yucatecas: 7 plazas, puertas eléctricas y aire trasero. Perfecta para la escuela, el súper y los viajes a la playa.'}
 ];}
-var S=Object.assign({phone:'529993456789',fbConnected:false,fbPage:''},JSON.parse(localStorage.getItem(LS_SET)||'{}'));
+var S=Object.assign({phone:'529993456789',fbConnected:false,fbPageId:'',fbPageName:'',fbToken:''},JSON.parse(localStorage.getItem(LS_SET)||'{}'));
 function saveS(){localStorage.setItem(LS_SET,JSON.stringify(S));}
 var V=JSON.parse(localStorage.getItem(LS_INV)||'null')||seed();
 function saveV(){try{localStorage.setItem(LS_INV,JSON.stringify(V));}catch(e){toast('⚠️ Almacenamiento lleno: usa fotos más ligeras.','err');}}
+function findV(id){for(var i=0;i<V.length;i++){if(V[i].id===id)return V[i];}return null;}
 
 /* ═══════ WHATSAPP / FACEBOOK ═══════ */
 function waDirect(m){return 'https://wa.me/'+S.phone+'?text='+encodeURIComponent(m);}
 function waShare(m){return 'https://wa.me/?text='+encodeURIComponent(m);}
 function msgInteres(v){return '¡Hola Mayab Autos! 👋 Me interesa el *'+v.marca+' '+v.modelo+' '+v.anio+'* ('+(v.precio?mxn(v.precio):'precio a consultar')+') que vi en su página.\n🔗 '+autoLink(v.id)+'\n¿Sigue disponible? Me gustaría verlo.';}
 function msgCompartir(v){return '🚗 *'+v.marca+' '+v.modelo+' '+v.anio+'* — ¡mira esta joya en Mérida!\n💰 '+(v.precio?mxn(v.precio):'Precio a consultar')+'\n🛣️ '+kmFmt(v.km)+' · '+(v.tipo==='auto'?'Automóvil':'Camioneta')+'\n📸 Fotos y ficha completa aquí 👇\n'+autoLink(v.id)+'\n📍 Mayab Autos · Mérida, Yucatán';}
-function fbUrl(v){return (v.fbPublished&&v.fbPostId)?('https://www.facebook.com/marketplace/item/'+v.fbPostId):'';}
+function postText(v){return '🚗 '+v.marca+' '+v.modelo+' '+v.anio+' — disponible en Mérida\n💰 '+(v.precio?mxn(v.precio)+' MXN':'Precio a consultar')+'\n🛣️ '+kmFmt(v.km)+' · '+(v.tipo==='auto'?'Automóvil':'Camioneta/SUV')+'\n'+v.desc+'\n✅ Garantía 90 días · Papeles verificados\n📱 Ficha completa: '+autoLink(v.id)+'\n📍 Mayab Autos · Mérida, Yucatán · WhatsApp '+S.phone;}
+function fbUrl(v){
+  if(!v.fbPublished||!v.fbPostId||!S.fbPageId)return '';
+  if(v.fbPostId.indexOf('_')>-1){
+    var sid=v.fbPostId.split('_')[1];
+    return 'https://www.facebook.com/permalink.php?story_fbid='+sid+'&id='+S.fbPageId;
+  }
+  return 'https://www.facebook.com/photo?fbid='+v.fbPostId;
+}
+
+/* ═══════ FACEBOOK REAL (Graph API) ═══════ */
+var pendingPages=null, pendingUserToken='';
+function fbConnect(){
+  var token=$('#fbTokenInput').value.trim();
+  if(!token){toast('Pega primero tu token del Graph API Explorer (botón ❓ te guía).','err');return;}
+  toast('<span class="spinner"></span> Verificando con Meta…','fb',2500);
+  fetch(GRAPH+'/me/accounts?access_token='+encodeURIComponent(token))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error){throw new Error(d.error.message);}
+      var pages=d.data;
+      if(!pages||!pages.length){throw new Error('Tu token no dio acceso a ninguna página. Revisa el permiso pages_show_list (paso 2 de la guía ❓).');}
+      if(pages.length===1){finishConnect(pages[0].access_token,pages[0]);}
+      else{pendingPages=pages;renderPagesList();openModal('modalPages');}
+    })
+    .catch(function(e){toast('❌ '+esc(e.message),'err',7000);});
+}
+function renderPagesList(){
+  var h=pendingPages.map(function(p,i){
+    return '<button class="btn btn-navy btn-block" style="margin-bottom:10px;justify-content:flex-start" data-act="pick-page" data-idx="'+i+'">📘 '+esc(p.name)+(p.category?' · '+esc(p.category):'')+'</button>';
+  }).join('');
+  $('#pagesList').innerHTML='<p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">Encontramos '+pendingPages.length+' páginas en tu cuenta. ¿En cuál publicamos los autos?</p>'+h;
+}
+function finishConnect(pageToken,page){
+  S.fbToken=pageToken;S.fbPageId=page.id;S.fbPageName=page.name;S.fbConnected=true;saveS();
+  closeModal('modalPages');$('#fbTokenInput').value='';
+  renderAdmin();toast('✅ Conectado como '+esc(page.name)+'. ¡El switch azul ya publica de verdad!','fb');
+}
+function fbPublish(v){
+  if(!S.fbConnected||!S.fbToken||!S.fbPageId){
+    toast('🔐 Primero conecta tu página de Facebook.','err');
+    openModal('modalFbHelp');return Promise.resolve(false);
+  }
+  toast('<span class="spinner"></span> Publicando en tu Página…','fb',2500);
+  return Promise.resolve()
+    .then(function(){
+      var fd=new FormData();
+      fd.append('message',postText(v));
+      fd.append('access_token',S.fbToken);
+      if(v.foto.indexOf('data:')===0){
+        return fetch(v.foto).then(function(b){return b.blob();}).then(function(blob){
+          fd.append('source',blob,'foto.jpg');return fd;
+        });
+      }
+      fd.append('url',v.foto);return fd;
+    })
+    .then(function(fd){return fetch(GRAPH+'/'+S.fbPageId+'/photos',{method:'POST',body:fd});})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error){throw new Error(d.error.message);}
+      v.fbPublished=true;
+      v.fbPostId=d.post_id||d.id;
+      saveV();renderCatalog();if(isAuth())renderAdmin();
+      toast('✅ ¡Publicado en tu Página de Facebook!','fb');
+      var u=fbUrl(v);if(u)window.open(u,'_blank');
+      return true;
+    })
+    .catch(function(e){
+      var msg=e.message||'Error de conexión';
+      if(/token|expired|190/i.test(msg)){msg='Tu token caducó o no tiene permisos. Genera uno nuevo y vuelve a conectar (guía ❓).';}
+      toast('❌ '+esc(msg),'err',7000);
+      if(isAuth())renderAdmin();
+      return false;
+    });
+}
+function fbUnpublish(v){
+  if(v.fbPostId&&S.fbToken){
+    fetch(GRAPH+'/'+v.fbPostId+'?access_token='+encodeURIComponent(S.fbToken),{method:'DELETE'}).catch(function(){});
+  }
+  v.fbPublished=false;v.fbPostId='';
+}
+function fbMarketplace(v){
+  var txt='🚗 '+v.marca+' '+v.modelo+' '+v.anio+'\n💰 '+(v.precio?mxn(v.precio)+' MXN':'Precio a consultar')+'\n🛣️ '+kmFmt(v.km)+' · '+(v.tipo==='auto'?'Automóvil':'Camioneta/SUV')+'\n\n'+v.desc+'\n\n📍 Mérida, Yucatán · Mayab Autos\n📞 WhatsApp: '+S.phone+'\n🔗 '+autoLink(v.id);
+  copyText(txt).catch(function(){});
+  window.open('https://www.facebook.com/marketplace/create/vehicle','_blank');
+  toast('📋 Ficha copiada. En Marketplace: pega el texto en la descripción, sube la foto y publica.','ok',6000);
+}
 
 /* ═══════ TOASTS ═══════ */
 function toast(msg,type,ms){
@@ -772,7 +910,7 @@ function carCard(v){
   h.push('<a class="ca-btn ca-wa" target="_blank" rel="noopener" href="'+waDirect(msgInteres(v))+'">📩 Me interesa</a>');
   h.push('<a class="ca-btn ca-share" target="_blank" rel="noopener" href="'+waShare(msgCompartir(v))+'">💬 Compartir</a>');
   if(fbUrl(v)){h.push('<a class="ca-btn ca-fb" target="_blank" rel="noopener" href="'+fbUrl(v)+'">📘 Ver en Facebook</a>');}
-  else{h.push('<button class="ca-btn ca-fb" disabled title="Aún sin publicar en Marketplace">📘 Ver en Facebook</button>');}
+  else{h.push('<button class="ca-btn ca-fb" disabled title="El dueño aún no lo publica en Facebook">📘 Ver en Facebook</button>');}
   h.push('<button class="ca-btn ca-more" data-act="detalle" data-id="'+v.id+'">Ver ficha →</button>');
   h.push('</div></div></article>');
   return h.join('');
@@ -792,8 +930,7 @@ function renderCatalog(){
 /* ═══════ FICHA DETALLE ═══════ */
 var detailId=null;
 function openDetail(id){
-  var v=null;for(var i=0;i<V.length;i++){if(V[i].id===id)v=V[i];}
-  if(!v)return;
+  var v=findV(id);if(!v)return;
   detailId=id;
   var sold=v.estado==='vendido', h=[];
   h.push('<div class="d-hero"><img onerror="imgFix(this)" src="'+v.foto+'" alt="'+esc(v.marca+' '+v.modelo)+'">');
@@ -838,14 +975,15 @@ function renderAdmin(){
     '<div class="stat"><b>'+tot+'</b><span>Vehículos</span></div>'+
     '<div class="stat green"><b>'+disp+'</b><span>Disponibles</span></div>'+
     '<div class="stat red"><b>'+vend+'</b><span>Vendidos</span></div>'+
-    '<div class="stat fb"><b>'+fb+'</b><span>En Marketplace</span></div>';
+    '<div class="stat fb"><b>'+fb+'</b><span>En Facebook</span></div>';
   $('#fbDot').className='fb-dot '+(S.fbConnected?'on':'off');
   if(S.fbConnected){
-    $('#fbStatusTxt').innerHTML='Conectado como <b style="color:var(--fb)">'+esc(S.fbPage)+'</b>. Publica y sincroniza con un clic. <button class="adm-btn" style="color:var(--red);border-color:var(--red);padding:6px 12px;margin-left:8px" data-act="fb-disconnect">Desconectar</button>';
+    $('#fbStatusTxt').innerHTML='Conectado como <b style="color:var(--fb)">'+esc(S.fbPageName)+'</b>. El switch 📘 publica de verdad en tu Página. Para Marketplace usa el botón <b>🛒</b> de cada auto (te prepara todo el anuncio).';
   }else{
-    $('#fbStatusTxt').textContent='Aún no conectado. Conecta tu página o perfil para publicar en Marketplace con un clic.';
+    $('#fbStatusTxt').innerHTML='No conectado. Sigue la guía del botón <b>❓</b> (3 minutos) para publicar automáticamente en tu Página de Facebook. <br><b>Marketplace:</b> usa el botón 🛒 de cada auto: copia la ficha y abre el creador de anuncios.';
   }
-  $('#fbConnectBtn').style.display=S.fbConnected?'none':'inline-flex';
+  $('#fbConnectZone').style.display=S.fbConnected?'none':'block';
+  $('#fbConnectedZone').style.display=S.fbConnected?'block':'none';
   $('#setPhone').value=S.phone;
   var rows=V.slice().sort(function(a,b){return b.fecha-a.fecha;}).map(function(v){
     var h=[];
@@ -855,14 +993,15 @@ function renderAdmin(){
     h.push('<small>'+(v.precio?mxn(v.precio):'Precio a consultar')+' · '+kmFmt(v.km)+'</small>');
     h.push('<div class="inv-tags">');
     h.push(v.estado==='disponible'?'<span class="tag ok">🟢 Disponible</span>':'<span class="tag sold">🔴 VENDIDO</span>');
-    if(v.fbPublished)h.push('<span class="tag fb">📘 En Marketplace</span>');
+    if(v.fbPublished)h.push('<span class="tag fb">📘 Publicado en tu Página</span>');
     if(!v.precio)h.push('<span class="tag consult">A consultar</span>');
     if(v.demo)h.push('<span class="tag demo">DEMO</span>');
     h.push('</div></div>');
     h.push('<div style="display:flex;flex-direction:column;gap:6px;align-items:center"><small style="font-size:.66rem;font-weight:800;color:var(--muted)">ESTADO</small><label class="sw" title="Disponible / Vendido"><input type="checkbox" data-act-sw="estado" data-id="'+v.id+'" '+(v.estado==='disponible'?'checked':'')+'><i></i></label></div>');
-    h.push('<div style="display:flex;flex-direction:column;gap:6px;align-items:center"><small style="font-size:.66rem;font-weight:800;color:var(--muted)">📘 FB</small><label class="sw fbsw" title="Publicar en Marketplace"><input type="checkbox" data-act-sw="fb" data-id="'+v.id+'" '+(v.fbPublished?'checked':'')+'><i></i></label></div>');
+    h.push('<div style="display:flex;flex-direction:column;gap:6px;align-items:center"><small style="font-size:.66rem;font-weight:800;color:var(--muted)">📘 PÁGINA</small><label class="sw fbsw" title="Publicar en mi Página de Facebook"><input type="checkbox" data-act-sw="fb" data-id="'+v.id+'" '+(v.fbPublished?'checked':'')+'><i></i></label></div>');
     h.push('<div class="inv-acts">');
-    h.push('<button class="ic-btn edit" data-act="edit" data-id="'+v.id+'" title="Editar">✏️</button>');
+    h.push('<button class="ic-btn edit" data-act="edit" data-id="'+v.id+'" title="Editar datos y foto">✏️</button>');
+    h.push('<button class="ic-btn mp" data-act="fb-market" data-id="'+v.id+'" title="Preparar anuncio para Marketplace (copia la ficha y abre el creador)">🛒</button>');
     h.push('<button class="ic-btn del" data-act="del" data-id="'+v.id+'" title="Eliminar">🗑️</button>');
     h.push('</div></div>');
     return h.join('');
@@ -926,41 +1065,28 @@ $('#formVeh').addEventListener('submit',function(e){
   if(!data.foto){toast('📷 Sube una fotografía del vehículo.','err');return;}
   var wantFb=$('#vFb').checked;
   if(id){
-    var v=null;for(var i=0;i<V.length;i++){if(V[i].id===id)v=V[i];}
+    var v=findV(id);
     if(v){
+      var wasFb=v.fbPublished;
       Object.assign(v,data);v.demo=false;
-      if(wantFb&&!v.fbPublished)publishFb(v);
-      if(!wantFb&&v.fbPublished){v.fbPublished=false;toast('📘 Publicación de Marketplace desactivada.','fb');}
+      if(wantFb&&!wasFb){fbPublish(v);}
+      if(!wantFb&&wasFb){fbUnpublish(v);toast('📘 Publicación de Facebook eliminada.','fb');}
       toast('✅ Cambios guardados y sincronizados en el sitio.');
     }
   }else{
     var nv=Object.assign({id:'v'+Date.now(),fecha:20260813,fbPublished:false,fbPostId:'',demo:false},data);
     V.unshift(nv);
-    if(wantFb)publishFb(nv);
+    if(wantFb){fbPublish(nv);}
     toast('🚗 '+nv.marca+' '+nv.modelo+' publicado en el catálogo.');
   }
   saveV();renderCatalog();if(isAuth())renderAdmin();
   closeModal('modalVeh');resetVehForm();
 });
 
-/* ═══════ FACEBOOK ═══════ */
-function publishFb(v){
-  if(!S.fbConnected){toast('🔐 Conecta Facebook primero para publicar.','err');openModal('modalFb');return false;}
-  toast('<span class="spinner"></span> Publicando en Marketplace…','fb',1600);
-  setTimeout(function(){
-    v.fbPublished=true;
-    v.fbPostId=v.fbPostId||('mkt-'+Math.floor(10000+Math.random()*89999));
-    saveV();renderCatalog();if(isAuth())renderAdmin();
-    toast('📘 Publicado en Marketplace: '+v.marca+' '+v.modelo,'fb');
-  },1400);
-  return true;
-}
-
 /* ═══════ CONTACTO ═══════ */
 $('#formContact').addEventListener('submit',function(e){
   e.preventDefault();
-  var msg='¡Hola Mayab Autos! Soy *'+$('#cName').value+'*'+($('#cPhone').value)?' (tel. '+$('#cPhone').value+')':'';
-  msg='¡Hola Mayab Autos! Soy *'+$('#cName').value+'*'+($('#cPhone').value?' (tel. '+$('#cPhone').value+')':'')+'.\n'+$('#cMsg').value+'\n\nEnviado desde la página web.';
+  var msg='¡Hola Mayab Autos! Soy *'+$('#cName').value+'*'+($('#cPhone').value?' (tel. '+$('#cPhone').value+')':'')+'.\n'+$('#cMsg').value+'\n\nEnviado desde la página web.';
   window.open(waDirect(msg),'_blank');
   toast('💬 Abriendo WhatsApp con tu mensaje…');
   e.target.reset();
@@ -985,8 +1111,7 @@ window.addEventListener('hashchange',route);
 document.addEventListener('click',function(e){
   var sw=e.target.closest('[data-act-sw]');
   if(sw){
-    var vid=sw.getAttribute('data-id'), v=null;
-    for(var i=0;i<V.length;i++){if(V[i].id===vid)v=V[i];}
+    var v=findV(sw.getAttribute('data-id'));
     if(!v)return;
     if(sw.getAttribute('data-act-sw')==='estado'){
       if(sw.checked){
@@ -999,19 +1124,13 @@ document.addEventListener('click',function(e){
         openModal('modalSold');
       }
     }else{
-      if(sw.checked){
-        var ok=publishFb(v);
-        if(!ok)renderAdmin();
-      }else{
-        v.fbPublished=false;saveV();renderCatalog();renderAdmin();
-        toast('📘 Publicación desactivada.','fb');
-      }
+      if(sw.checked){fbPublish(v);}
+      else{fbUnpublish(v);saveV();renderCatalog();renderAdmin();toast('📘 Publicación eliminada de Facebook.','fb');}
     }
     return;
   }
   var t=e.target.closest('[data-act]');if(!t)return;
-  var act=t.getAttribute('data-act'), id=t.getAttribute('data-id'), v2=null;
-  if(id){for(var j=0;j<V.length;j++){if(V[j].id===id)v2=V[j];}}
+  var act=t.getAttribute('data-act'), id=t.getAttribute('data-id'), v2=id?findV(id):null;
   if(act==='detalle'){openDetail(id);}
   else if(act==='reset-filters'){$('#fTipo').value='all';$('#fPrecio').value='all';$('#fAnio').value='all';renderCatalog();}
   else if(act==='close'){closeModal(t.getAttribute('data-target'));}
@@ -1025,32 +1144,32 @@ document.addEventListener('click',function(e){
     openModal('modalDelete');
   }
   else if(act==='confirm-del'){
-    var dv=null;for(var k=0;k<V.length;k++){if(V[k].id===pendingDelete)dv=V[k];}
-    V=V.filter(function(x){return x.id!==pendingDelete;});
-    saveV();renderCatalog();renderAdmin();closeModal('modalDelete');
-    if(dv)toast('🗑️ '+dv.marca+' '+dv.modelo+' eliminado del catálogo'+(dv.fbPublished?' y de Marketplace':'')+'.');
+    var dv=findV(pendingDelete);
+    if(dv){if(dv.fbPublished){fbUnpublish(dv);}
+      V=V.filter(function(x){return x.id!==pendingDelete;});
+      saveV();renderCatalog();renderAdmin();
+      toast('🗑️ '+dv.marca+' '+dv.modelo+' eliminado del catálogo'+(dv.fbPublished?' y de Facebook':'')+'.');
+    }
+    closeModal('modalDelete');
   }
   else if(act==='confirm-sold'){
-    var sv=null;for(var m=0;m<V.length;m++){if(V[m].id===pendingSold)sv=V[m];}
+    var sv=findV(pendingSold);
     if(sv){
       sv.estado='vendido';
-      if(sv.fbPublished&&$('#soldFbChk').checked){sv.fbPublished=false;toast('📘 Marcado como vendido también en Marketplace.','fb');}
+      if(sv.fbPublished&&$('#soldFbChk').checked){fbUnpublish(sv);toast('📘 Publicación eliminada de Facebook.','fb');}
       saveV();renderCatalog();renderAdmin();
       toast('🔴 '+sv.marca+' '+sv.modelo+' marcado como VENDIDO. Sigue visible con su etiqueta.');
     }
     closeModal('modalSold');
   }
-  else if(act==='fb-connect'){openModal('modalFb');}
-  else if(act==='fb-disconnect'){S.fbConnected=false;S.fbPage='';saveS();renderAdmin();toast('📘 Facebook desconectado.','fb');}
-  else if(act==='fb-auth'){
-    var b=$('#fbAuthBtn');b.disabled=true;b.innerHTML='<span class="spinner"></span> Autorizando con Meta…';
-    setTimeout(function(){
-      S.fbConnected=true;S.fbPage='Mayab Autos Mérida (Página)';saveS();
-      b.disabled=false;b.innerHTML='🔐 Iniciar sesión con Facebook';
-      closeModal('modalFb');renderAdmin();
-      toast('✅ Facebook conectado: '+S.fbPage,'fb');
-    },1500);
+  else if(act==='fb-connect'){fbConnect();}
+  else if(act==='fb-help'){openModal('modalFbHelp');}
+  else if(act==='fb-disconnect'){S.fbConnected=false;S.fbPageId='';S.fbPageName='';S.fbToken='';saveS();renderAdmin();toast('📘 Página desconectada.','fb');}
+  else if(act==='pick-page'){
+    var idx=parseInt(t.getAttribute('data-idx'),10);
+    if(pendingPages&&pendingPages[idx]){finishConnect(pendingPages[idx].access_token,pendingPages[idx]);}
   }
+  else if(act==='fb-market'&&v2){fbMarketplace(v2);}
   else if(act==='restore-demo'){
     V=seed();saveV();renderCatalog();renderAdmin();
     toast('♻️ Inventario de ejemplo restaurado (6 autos DEMO).');
@@ -1087,4 +1206,3 @@ setWA();route();watch();
 </script>
 </body>
 </html>
-
